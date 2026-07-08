@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kennzeichen Guessr | Location Map Game</title>
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Custom styling -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Background Glow Blobs -->
+    <div class="bg-glow glow-top-left"></div>
+    <div class="bg-glow glow-bottom-right"></div>
+
+    <header>
+        <h1>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #06b6d4;">
+                <circle cx="12" cy="10" r="3"/>
+                <path d="M12 21.7C10.3 19.8 4 12.3 4 10a8 8 0 1 1 16 0c0 2.3-6.3 9.8-8 11.7z"/>
+            </svg>
+            Kennzeichen Guessr
+        </h1>
+        <div class="score-container">
+            <div class="score-badge" id="stats-streak">
+                Streak: <span id="streak-val">0</span>
+            </div>
+            <div class="score-badge" id="stats-score">
+                Score: <span id="score-val">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Sidebar controls -->
+        <section class="sidebar">
+            <div class="panel-card" style="position: relative;">
+                <h2>Find the Location</h2>
+                <p>Identify the region for the license plate prefix shown below. Click anywhere on the map of Germany to drop your guess pin, then click submit!</p>
+                <div class="loader-overlay" id="loading-overlay">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- License Plate Display Widget -->
+            <div class="panel-card" style="display: flex; justify-content: center; align-items: center; padding: 1.5rem 0.5rem;">
+                <div class="license-plate">
+                    <div class="plate-eu">
+                        <div class="eu-stars"></div>
+                        <div class="eu-country">D</div>
+                    </div>
+                    <div class="plate-content">
+                        <span id="plate-text-display">?</span>
+                        <div class="plate-seals">
+                            <span class="seal-top"></span>
+                            <span class="seal-bottom"></span>
+                        </div>
+                        <span class="plate-placeholder">GUESSR</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guessing Panel -->
+            <div class="panel-card" id="guess-card">
+                <h2>Your Guess</h2>
+                <div class="guess-form">
+                    <p id="guess-hint" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem;">
+                        Click on the map to drop a pin.
+                    </p>
+                    <button id="submit-guess-btn" class="btn pulse-glow" disabled>Submit Pin Guess</button>
+                </div>
+            </div>
+
+            <!-- Results Reveal Panel -->
+            <div class="panel-card" id="results-card" style="display: none;">
+                <h2 id="res-status-title">Correct!</h2>
+                <div class="result-details" style="margin: 1rem 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div class="result-row">
+                        <span class="result-label">City Name</span>
+                        <span class="result-value" id="res-city">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Distance</span>
+                        <span class="result-value" id="res-distance">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Points Awarded</span>
+                        <span class="result-value" id="res-points" style="color: #38bdf8; font-weight: bold;">+0</span>
+                    </div>
+                </div>
+                <button id="next-guess-btn" class="btn btn-secondary" style="width: 100%;">Next Guess</button>
+            </div>
+
+            <div class="panel-card" style="margin-top: auto;">
+                <button id="new-round-btn" class="btn btn-secondary" style="width: 100%;">Start Game</button>
+            </div>
+        </section>
+
+        <!-- Leaflet Map Container -->
+        <section class="map-container">
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <!-- Results modal removed, using inline sidebar display -->
+
+    <!-- Leaflet.js library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Custom logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>

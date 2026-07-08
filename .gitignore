@@ -1,0 +1,33 @@
+# Target directory (compiled classes and packaging)
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Local Maven binary folder
+maven-bin/
+
+# Crash logs
+err_pid*
+hs_err_pid*
+
+# IDE settings
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log

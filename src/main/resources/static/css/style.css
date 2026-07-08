@@ -1,0 +1,479 @@
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=Teko:wght@500;700&display=swap');
+
+:root {
+    --bg-color: #080c14;
+    --card-bg: rgba(17, 25, 40, 0.75);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --secondary-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    --accent-color: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.4);
+    
+    --success-color: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.15);
+    --error-color: #f43f5e;
+    --error-bg: rgba(244, 63, 94, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Background glow effects */
+.bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(150px);
+    z-index: -1;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.glow-top-left {
+    background: #6366f1;
+    top: -200px;
+    left: -200px;
+}
+
+.glow-bottom-right {
+    background: #06b6d4;
+    bottom: -200px;
+    right: -200px;
+}
+
+header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+    backdrop-filter: blur(10px);
+    background-color: rgba(8, 12, 20, 0.5);
+    z-index: 10;
+}
+
+h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: var(--secondary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.score-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.score-badge {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.score-badge span {
+    color: #06b6d4;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Layout */
+main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    height: calc(100vh - 75px);
+    position: relative;
+}
+
+@media (max-width: 900px) {
+    main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+    }
+}
+
+/* Control Panel */
+.sidebar {
+    background: rgba(11, 15, 25, 0.8);
+    border-right: 1px solid var(--card-border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    z-index: 5;
+}
+
+.panel-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 1.25rem;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.panel-card:hover {
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+.panel-card h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.panel-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* German License Plate Graphic */
+.license-plate {
+    width: 270px;
+    height: 70px;
+    background-color: #ffffff;
+    border: 3.5px solid #000000;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.8);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+}
+
+.plate-eu {
+    width: 32px;
+    height: 100%;
+    background-color: #003399; /* EU Blue */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    position: relative;
+}
+
+/* Render golden stars circle */
+.plate-eu::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle, transparent 35%, #ffcc00 35%, #ffcc00 45%, transparent 45%);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='8' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-dasharray='1 3'/></svg>");
+    display: block;
+}
+
+.eu-country {
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.plate-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    position: relative;
+}
+
+#plate-text-display {
+    color: #000000;
+    font-family: 'Teko', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Registration seals */
+.plate-seals {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 12px;
+}
+
+.seal-top {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); /* TÜV inspection sticker */
+    border: 1px solid #78350f;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+.seal-bottom {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #e2e8f0; /* State Crest seal */
+    border: 1px solid #94a3b8;
+    background-image: radial-gradient(circle, #64748b 20%, transparent 20%);
+}
+
+.plate-placeholder {
+    position: absolute;
+    right: 15px;
+    color: rgba(0, 0, 0, 0.15);
+    font-family: 'Teko', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* Guess Form Controls */
+.guess-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    background: #1e293b;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: var(--secondary-gradient);
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+}
+
+.btn-secondary:hover {
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.6);
+}
+
+/* Map area */
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    cursor: crosshair !important;
+}
+
+/* Dark mode overrides for Leaflet */
+.leaflet-container {
+    background: var(--bg-color) !important;
+}
+
+.leaflet-bar a {
+    background-color: rgba(17, 25, 40, 0.9) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: #06b6d4 !important;
+    color: white !important;
+}
+
+/* Feedback Overlay Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(8, 12, 20, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .modal {
+    transform: scale(1);
+}
+
+.result-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2.5rem;
+}
+
+.result-icon.correct {
+    background: var(--success-bg);
+    color: var(--success-color);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.result-icon.incorrect {
+    background: var(--error-bg);
+    color: var(--error-color);
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+}
+
+.modal h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.result-details {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.result-label {
+    color: var(--text-secondary);
+}
+
+.result-value {
+    font-weight: 600;
+}
+
+/* Animations */
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+    50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.7); }
+    100% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+}
+
+.pulse-glow {
+    animation: pulseGlow 2s infinite;
+}
+
+/* Loading overlay */
+.loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(8, 12, 20, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    border-radius: 20px;
+}
+
+.loader-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(6, 182, 212, 0.1);
+    border-top-color: #06b6d4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
