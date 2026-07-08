@@ -477,3 +477,84 @@ main {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Leaderboard custom styles */
+.leaderboard-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    transition: background 0.2s ease;
+}
+
+.leaderboard-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.leaderboard-player {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rank-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.rank-1 {
+    background-color: #fbbf24; /* Gold */
+    color: #78350f;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+.rank-2 {
+    background-color: #cbd5e1; /* Silver */
+    color: #1e293b;
+    box-shadow: 0 0 10px rgba(203, 213, 225, 0.2);
+}
+
+.rank-3 {
+    background-color: #b45309; /* Bronze */
+    color: #fef3c7;
+    box-shadow: 0 0 10px rgba(180, 83, 9, 0.2);
+}
+
+.rank-normal {
+    background-color: #334155;
+    color: #cbd5e1;
+}
+
+.leaderboard-score {
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+/* Custom Scrollbar for Leaderboard list */
+#leaderboard-display::-webkit-scrollbar {
+    width: 6px;
+}
+
+#leaderboard-display::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 10px;
+}
+
+#leaderboard-display::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+#leaderboard-display::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}

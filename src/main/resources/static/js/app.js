@@ -9,6 +9,7 @@ let currentRoundId = null;
 let score = 0;
 let streak = 0;
 let roundActive = false;
+let playerName = null;
 
 // DOM Elements
 const newRoundBtn = document.getElementById('new-round-btn');
@@ -17,17 +18,28 @@ const loadingOverlay = document.getElementById('loading-overlay');
 const plateTextDisplay = document.getElementById('plate-text-display');
 const guessHint = document.getElementById('guess-hint');
 
-const streakVal = document.getElementById('streak-val');
-const scoreVal = document.getElementById('score-val');
+const streakVal = document.getElementById('stats-streak').querySelector('span');
+const scoreVal = document.getElementById('stats-score').querySelector('span');
+const playerDisplay = document.getElementById('player-display');
 
-// Guess Panel & Results Panel
+// Panels
+const registerCard = document.getElementById('register-card');
+const infoCard = document.getElementById('info-card');
+const plateCard = document.getElementById('plate-card');
 const guessCard = document.getElementById('guess-card');
 const resultsCard = document.getElementById('results-card');
+const leaderboardDisplay = document.getElementById('leaderboard-display');
+const actionsCard = document.getElementById('actions-card');
+
+// Name Input controls
+const playerNameInput = document.getElementById('player-name-input');
+const saveNameBtn = document.getElementById('save-name-btn');
+
+const nextGuessBtn = document.getElementById('next-guess-btn');
 const resStatusTitle = document.getElementById('res-status-title');
 const resCity = document.getElementById('res-city');
 const resDistance = document.getElementById('res-distance');
 const resPoints = document.getElementById('res-points');
-const nextGuessBtn = document.getElementById('next-guess-btn');
 
 const CENTER_OF_GERMANY = [51.1657, 10.4515];
 
@@ -70,6 +82,47 @@ function initMap() {
         submitGuessBtn.disabled = false;
         guessHint.textContent = `Pin placed at: [${lat.toFixed(4)}, ${lng.toFixed(4)}]`;
     });
+}
+
+// Check player registration state on load
+function checkPlayerState() {
+    const savedName = localStorage.getItem('guessr_player_name');
+    
+    if (savedName && savedName.trim().length >= 2) {
+        playerName = savedName.trim();
+        playerDisplay.textContent = playerName;
+        
+        // Hide registration panel, show game interface panels
+        registerCard.style.display = 'none';
+        infoCard.style.display = 'block';
+        plateCard.style.display = 'flex';
+        guessCard.style.display = 'block';
+        actionsCard.style.display = 'block';
+        
+        startNewRound();
+    } else {
+        // Force player registration
+        registerCard.style.display = 'block';
+        infoCard.style.display = 'none';
+        plateCard.style.display = 'none';
+        guessCard.style.display = 'none';
+        actionsCard.style.display = 'none';
+    }
+    
+    fetchLeaderboard();
+}
+
+// Save Username
+function savePlayerName() {
+    const inputName = playerNameInput.value.trim();
+    if (inputName.length < 2 || inputName.length > 12) {
+        alert("Please enter a name between 2 and 12 characters long.");
+        return;
+    }
+    
+    // Save to local storage
+    localStorage.setItem('guessr_player_name', inputName);
+    checkPlayerState();
 }
 
 // Start a New Game Round
@@ -199,6 +252,9 @@ async function submitGuess() {
         score += data.score;
         updateStats();
 
+        // Submit score to database Leaderboard
+        await submitScoreToLeaderboard();
+
     } catch (error) {
         console.error('Error submitting guess:', error);
         alert('Error processing guess coordinates. Please try again.');
@@ -206,6 +262,64 @@ async function submitGuess() {
         submitGuessBtn.disabled = false;
     } finally {
         showLoader(false);
+    }
+}
+
+// Submit score to backend leaderboard
+async function submitScoreToLeaderboard() {
+    try {
+        await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                playerName: playerName,
+                score: score
+            })
+        });
+        fetchLeaderboard();
+    } catch (error) {
+        console.error('Failed to submit score to leaderboard:', error);
+    }
+}
+
+// Fetch and render Leaderboard
+async function fetchLeaderboard() {
+    try {
+        const response = await fetch('/api/leaderboard');
+        if (!response.ok) throw new Error('Failed to fetch leaderboard');
+        
+        const data = await response.json();
+        
+        leaderboardDisplay.innerHTML = '';
+        
+        if (data.length === 0) {
+            leaderboardDisplay.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">No high scores yet. Be the first!</div>';
+            return;
+        }
+        
+        data.forEach((entry, index) => {
+            const rank = index + 1;
+            let rankClass = 'rank-normal';
+            if (rank === 1) rankClass = 'rank-1';
+            else if (rank === 2) rankClass = 'rank-2';
+            else if (rank === 3) rankClass = 'rank-3';
+            
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row';
+            row.innerHTML = `
+                <div class="leaderboard-player">
+                    <span class="rank-badge ${rankClass}">${rank}</span>
+                    <span>${entry.playerName}</span>
+                </div>
+                <span class="leaderboard-score">${entry.score} pts</span>
+            `;
+            leaderboardDisplay.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        leaderboardDisplay.innerHTML = '<div style="font-size: 0.85rem; color: var(--error-color); text-align: center;">Failed to load leaderboard.</div>';
     }
 }
 
@@ -228,6 +342,13 @@ function showLoader(show) {
 newRoundBtn.addEventListener('click', startNewRound);
 nextGuessBtn.addEventListener('click', startNewRound);
 submitGuessBtn.addEventListener('click', submitGuess);
+saveNameBtn.addEventListener('click', savePlayerName);
+playerNameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') savePlayerName();
+});
 
 // Initialize on DOM load
-window.addEventListener('DOMContentLoaded', initMap);
+window.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    checkPlayerState();
+});

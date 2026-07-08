@@ -23,6 +23,9 @@
             Kennzeichen Guessr
         </h1>
         <div class="score-container">
+            <div class="score-badge" id="stats-player">
+                Player: <span id="player-display">Guest</span>
+            </div>
             <div class="score-badge" id="stats-streak">
                 Streak: <span id="streak-val">0</span>
             </div>
@@ -35,7 +38,18 @@
     <main>
         <!-- Sidebar controls -->
         <section class="sidebar">
-            <div class="panel-card" style="position: relative;">
+            <!-- Player Registration Panel -->
+            <div class="panel-card" id="register-card">
+                <h2>Register Player</h2>
+                <p style="margin-bottom: 1rem;">Enter your name to start playing and compete on the leaderboard!</p>
+                <div class="guess-form">
+                    <input type="text" id="player-name-input" class="guess-input" placeholder="Enter name..." maxlength="12" style="text-align: left; font-size: 1rem; padding: 0.75rem; text-transform: none; letter-spacing: normal;">
+                    <button id="save-name-btn" class="btn">Start Game</button>
+                </div>
+            </div>
+
+            <!-- Main Game Info Panel -->
+            <div class="panel-card" id="info-card" style="display: none; position: relative;">
                 <h2>Find the Location</h2>
                 <p>Identify the region for the license plate prefix shown below. Click anywhere on the map of Germany to drop your guess pin, then click submit!</p>
                 <div class="loader-overlay" id="loading-overlay">
@@ -44,7 +58,7 @@
             </div>
 
             <!-- License Plate Display Widget -->
-            <div class="panel-card" style="display: flex; justify-content: center; align-items: center; padding: 1.5rem 0.5rem;">
+            <div class="panel-card" id="plate-card" style="display: none; justify-content: center; align-items: center; padding: 1.5rem 0.5rem;">
                 <div class="license-plate">
                     <div class="plate-eu">
                         <div class="eu-stars"></div>
@@ -62,7 +76,7 @@
             </div>
 
             <!-- Guessing Panel -->
-            <div class="panel-card" id="guess-card">
+            <div class="panel-card" id="guess-card" style="display: none;">
                 <h2>Your Guess</h2>
                 <div class="guess-form">
                     <p id="guess-hint" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem;">
@@ -92,8 +106,17 @@
                 <button id="next-guess-btn" class="btn btn-secondary" style="width: 100%;">Next Guess</button>
             </div>
 
-            <div class="panel-card" style="margin-top: auto;">
-                <button id="new-round-btn" class="btn btn-secondary" style="width: 100%;">Start Game</button>
+            <!-- Leaderboard Panel -->
+            <div class="panel-card" id="leaderboard-card" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px;">
+                <h2>Leaderboard (Top 10)</h2>
+                <div id="leaderboard-display" style="display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 180px; padding-right: 4px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Loading high scores...</div>
+                </div>
+            </div>
+
+            <!-- Game Actions Panel -->
+            <div class="panel-card" id="actions-card" style="display: none; margin-top: auto;">
+                <button id="new-round-btn" class="btn btn-secondary" style="width: 100%;">Reset Round</button>
             </div>
         </section>
 
