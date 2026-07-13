@@ -558,3 +558,274 @@ main {
 #leaderboard-display::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
 }
+
+/* =========================================
+   LANDING PAGE STYLES
+   ========================================= */
+.landing-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-color); /* Nutzt deinen dunklen Hintergrund */
+    background-image: url('../img/noise-texture.png'); /* Falls du die Textur nutzen willst */
+    background-blend-mode: overlay;
+    z-index: 1000;
+}
+
+.landing-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 3rem;
+    margin-bottom: 3rem;
+    letter-spacing: -0.02em;
+}
+
+.landing-title .text-white { color: #ffffff; }
+.landing-title .text-purple { color: #a855f7; } /* Passend zu deinem primary-gradient */
+
+.landing-card-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.landing-badge {
+    background-color: #00b4d8; /* Anima Blau */
+    color: #caf0f8;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 10px;
+    position: absolute;
+    top: -15px;
+    z-index: 2;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.landing-card {
+    background-color: rgba(0, 119, 182, 0.75); /* Anima Blau transparenter */
+    border-radius: 15px;
+    padding: 3rem 4rem;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.landing-card h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    color: #caf0f8;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.landing-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+}
+
+.landing-btn {
+    background-color: #00b4d8;
+    color: #caf0f8;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 6px 15px rgba(0, 180, 216, 0.4);
+}
+
+.progress-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #90e0ef;
+    background-color: rgba(144, 224, 239, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Simuliert den kleinen Strich in der Mitte des Kreises (aus dem SVG) */
+.progress-circle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 50%;
+    left: 50%;
+    width: 2px;
+    background-color: #90e0ef;
+}
+
+.progress-circle span {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    color: #caf0f8;
+    font-size: 1rem;
+}
+
+/* ==========================================================================
+   LANDING PAGE STYLES (Zugefügt für Single Page Flow)
+   ========================================================================== */
+
+.landing-wrapper {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 2rem;
+    background-color: var(--bg-color);
+}
+
+.landing-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3.8rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.text-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.landing-card-container {
+    position: relative;
+    width: 100%;
+    max-width: 580px;
+}
+
+.landing-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #06b6d4;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 1.2rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    z-index: 102;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+}
+
+.landing-card {
+    background: rgba(17, 25, 40, 0.65);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 3rem 2rem 2.5rem;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.landing-card h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.landing-controls {
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .landing-controls {
+        flex-direction: column;
+    }
+    .landing-btn, .landing-input {
+        width: 100% !important;
+    }
+}
+
+.landing-btn {
+    background: #0284c7; /* Schickes tiefes Cyan/Blau aus dem Mockup */
+    color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+    min-width: 160px;
+}
+
+.landing-btn:hover {
+    transform: translateY(-2px);
+    background: #0369a1;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+}
+
+.landing-input {
+    background: rgba(6, 182, 212, 0.15);
+    border: 2px solid rgba(6, 182, 212, 0.4);
+    border-radius: 16px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    color: #ffffff;
+    width: 200px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.landing-input:focus {
+    outline: none;
+    border-color: #06b6d4;
+    background: rgba(6, 182, 212, 0.25);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+}
+
+.landing-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Weiche Kanten für die Deutschland-Maske (Vignetten-Effekt) */
+.map-mask-overlay {
+    filter: blur(8px); /* Erzeugt die weiche Kante. Erhöhe den Wert (z.B. 12px) für noch weichere Kanten */
+    transform-origin: center;
+}
