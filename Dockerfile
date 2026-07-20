@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Copy the pre-built jar from the host target folder
