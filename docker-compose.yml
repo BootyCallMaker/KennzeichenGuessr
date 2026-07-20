@@ -14,5 +14,17 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  app:
+    build: .
+    container_name: license_plate_game_container
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=postgres
+      - DB_HOST=db
+    depends_on:
+      - db
+
 volumes:
   pgdata:

@@ -17,32 +17,66 @@ An interactive, web-based geography guessing game. The backend is built with Spr
 
 ## How to Run
 
-### 1. Start the Database
-From the project root directory, spin up the local PostgreSQL database using Docker Compose:
-```bash
-docker compose up -d
-```
-This launches a PostgreSQL container bound to `localhost:5432` with the database `license_plate_db`.
+You can choose to run the application either completely inside **Docker Desktop** (recommended for a clean setup with a single click in your browser) or **locally on your machine** (using your IDE).
 
-### 2. Run the Spring Boot Application
-You can run the application directly from your IDE of choice:
-- **IntelliJ IDEA**: Open the folder as a project, wait for dependencies to sync, and run the `LicensePlateGameApplication` main class.
-- **VS Code**: Open the folder, ensure the Java Extension Pack is active, and press F5.
-- **Terminal (if Maven is installed)**:
-  ```bash
-  mvn spring-boot:run
-  ```
+### Option A: Running in Docker Desktop (Recommended)
 
-### 3. Open the Frontend
-Once the application starts, open your web browser and navigate to:
-```
-http://localhost:8080/index.html
-```
+This method packages the backend and database into containers, letting you manage and launch the app directly from Docker Desktop.
+
+1. **Compile the Backend**:
+   Generate the package on your host machine using the Maven wrapper:
+   * **Windows (PowerShell)**:
+     ```powershell
+     $env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"  # Set if JAVA_HOME is not in environment
+     .\mvnw.cmd package -DskipTests
+     ```
+   * **macOS / Linux**:
+     ```bash
+     ./mvnw package -DskipTests
+     ```
+
+2. **Start the Docker Stack**:
+   Build and start the container services (database + backend app):
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Open the Game**:
+   * Open the **Docker Desktop** application.
+   * Under the **Containers** tab, expand the `kennzeichenguessr` group.
+   * Click the blue **`8080:8080`** port link next to `license_plate_game_container` (or manually navigate to `http://localhost:8080/index.html` in your browser).
+
+---
+
+### Option B: Running Locally (Traditional)
+
+1. **Start the Database Only**:
+   Start only the PostgreSQL database container from the root directory:
+   ```bash
+   docker compose up -d db
+   ```
+
+2. **Run the Spring Boot Application**:
+   You can run the application directly from your IDE of choice:
+   * **IntelliJ IDEA**: Open the folder as a project, wait for dependencies to sync, and run the `LicensePlateGameApplication` main class.
+   * **VS Code**: Open the folder, ensure the Java Extension Pack is active, and press `F5`.
+   * **Terminal (Maven Wrapper)**:
+     * **Windows**: `.\mvnw.cmd spring-boot:run`
+     * **macOS / Linux**: `./mvnw spring-boot:run`
+
+3. **Open the Frontend**:
+   Navigate to:
+   ```
+   http://localhost:8080/index.html
+   ```
+
+---
 
 ## Running the Tests
+
 To run unit and integration tests (which use an in-memory H2 database, requiring no active Docker container):
-- **IDE**: Run tests from `src/test/java/com/game/licenseplate/GameControllerTest.java`.
-- **Terminal (if Maven is installed)**:
-  ```bash
-  mvn test
-  ```
+* **IDE**: Run tests from `src/test/java/com/game/licenseplate/GameControllerTest.java`.
+* **Terminal**:
+  * **Windows**: `.\mvnw.cmd test`
+  * **macOS / Linux**: `./mvnw test`
+
