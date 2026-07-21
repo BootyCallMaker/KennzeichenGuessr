@@ -22,18 +22,20 @@ const streakVal = document.getElementById('stats-streak').querySelector('span');
 const scoreVal = document.getElementById('stats-score').querySelector('span');
 const playerDisplay = document.getElementById('player-display');
 
-// Panels
-const registerCard = document.getElementById('register-card');
+// Screens & Landing Page elements
+const landingPage = document.getElementById('landing-page');
+const gameContent = document.getElementById('game-content');
+const landingStartBtn = document.getElementById('landing-start-btn');
+const landingNameInput = document.getElementById('landing-name-input');
+
+// Panels inside Sidebar
 const infoCard = document.getElementById('info-card');
 const plateCard = document.getElementById('plate-card');
 const guessCard = document.getElementById('guess-card');
+const FrenchCard = document.getElementById('results-card'); // resultsCard
 const resultsCard = document.getElementById('results-card');
 const leaderboardDisplay = document.getElementById('leaderboard-display');
 const actionsCard = document.getElementById('actions-card');
-
-// Name Input controls
-const playerNameInput = document.getElementById('player-name-input');
-const saveNameBtn = document.getElementById('save-name-btn');
 
 const nextGuessBtn = document.getElementById('next-guess-btn');
 const resStatusTitle = document.getElementById('res-status-title');
@@ -48,127 +50,141 @@ function initMap() {
     map = L.map('map', {
         zoomControl: true,
         maxZoom: 18,
-        minZoom: 5
+        minZoom: 5,
+        maxBounds: [[47.2, 5.8], [55.1, 15.1]], // Verhindert, dass der Spieler zu weit von Deutschland wegscrollt
+        maxBoundsViscosity: 0.8
     }).setView(CENTER_OF_GERMANY, 6);
 
-    // Apply CartoDB Dark Matter tiles for a high-end dark aesthetic
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
+    // 1. Die vibrante, farbige Hauptkarte mit deutschen Namen laden
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
     }).addTo(map);
 
-    // Map Click Listener to Drop Pin
+    // 2. Trick: Wir holen uns die offiziellen Koordinaten der Grenze von Deutschland (Invertiert)
+    // Ein riesiges Viereck um die ganze Welt, aus dem Deutschland "ausgeschnitten" ist
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries/DEU.geo.json')
+        .then(response => response.json())
+        .then(geojsonData => {
+            // Wir erstellen ein invertiertes Polygon (Welt minus Deutschland)
+            const worldCoords = [
+                [-90, -180],
+                [-90, 180],
+                [90, 180],
+                [90, -180]
+            ];
+            
+            // Die inneren Ringe sind die echten Grenzen Deutschlands
+            const deCoordinates = geojsonData.features[0].geometry.coordinates;
+            
+            // Falls es ein MultiPolygon ist (Inseln etc.), mappen wir alle Ringe rein
+            const holes = geojsonData.features[0].geometry.type === 'MultiPolygon' 
+                ? deCoordinates.map(polygon => polygon[0].map(coord => [coord[1], coord[0]]))
+                : deCoordinates.map(ring => ring.map(coord => [coord[1], coord[0]]));
+
+            // Zeichne die abdunkelnde Maske über den Rest der Welt
+            L.polygon([worldCoords, ...holes], {
+                className: 'map-mask-overlay', // <--- Diese Klasse neu hinzufügen!
+                color: 'transparent',          
+                fillColor: '#080c14',          
+                fillOpacity: 0.35,             
+                pointerEvents: 'none'          
+            }).addTo(map);
+        })
+        .catch(err => {
+            console.warn("Deutschland-Maske konnte nicht geladen werden, zeige normale Karte:", err);
+        });
+
+    // Klick-Logik auf der Karte bleibt unverändert...
     map.on('click', (e) => {
         if (!roundActive) return;
-
         const { lat, lng } = e.latlng;
 
         if (guessMarker === null) {
-            // Drop a new guess pin
-            guessMarker = L.marker([lat, lng], {
-                draggable: true
-            }).addTo(map);
-            
-            // Re-validate if dragged
-            guessMarker.on('dragend', () => {
-                submitGuessBtn.disabled = false;
-            });
+            guessMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            guessMarker.on('dragend', () => { submitGuessBtn.disabled = false; });
         } else {
-            // Move existing guess pin
             guessMarker.setLatLng([lat, lng]);
         }
-
         submitGuessBtn.disabled = false;
-        guessHint.textContent = `Pin placed at: [${lat.toFixed(4)}, ${lng.toFixed(4)}]`;
+        guessHint.textContent = `Pin platziert bei: [${lat.toFixed(4)}, ${lng.toFixed(4)}]`;
     });
 }
-
-// Check player registration state on load
+// Check player state on load (Transitions between Landing Screen and Game)
+// Check player state on load - Startet JETZT IMMER auf der Landing Page
 function checkPlayerState() {
+    // Landing Page erzwingen
+    landingPage.style.display = 'flex';
+    gameContent.style.display = 'none';
+
+    // Wenn schon ein Name gespeichert war, tragen wir ihn als Komfort-Feature direkt ins Input-Feld ein
     const savedName = localStorage.getItem('guessr_player_name');
-    
     if (savedName && savedName.trim().length >= 2) {
-        playerName = savedName.trim();
-        playerDisplay.textContent = playerName;
-        
-        // Hide registration panel, show game interface panels
-        registerCard.style.display = 'none';
-        infoCard.style.display = 'block';
-        plateCard.style.display = 'flex';
-        guessCard.style.display = 'block';
-        actionsCard.style.display = 'block';
-        
-        startNewRound();
-    } else {
-        // Force player registration
-        registerCard.style.display = 'block';
-        infoCard.style.display = 'none';
-        plateCard.style.display = 'none';
-        guessCard.style.display = 'none';
-        actionsCard.style.display = 'none';
+        landingNameInput.value = savedName.trim();
     }
     
+    // Leaderboard trotzdem schon im Hintergrund laden
     fetchLeaderboard();
 }
 
-// Save Username
-function savePlayerName() {
-    const inputName = playerNameInput.value.trim();
+// Handler for the Landing Page Start Button
+// Handler for the Landing Page Start Button
+function handleGameStart() {
+    const inputName = landingNameInput.value.trim();
     if (inputName.length < 2 || inputName.length > 12) {
         alert("Please enter a name between 2 and 12 characters long.");
         return;
     }
     
-    // Save to local storage
+    // Name speichern und zuweisen
     localStorage.setItem('guessr_player_name', inputName);
-    checkPlayerState();
+    playerName = inputName;
+    playerDisplay.textContent = playerName;
+    
+    // Screens umschalten
+    landingPage.style.display = 'none';
+    gameContent.style.display = 'flex';
+    
+    // Spiel-Panels aktivieren
+    infoCard.style.display = 'block';
+    plateCard.style.display = 'flex';
+    guessCard.style.display = 'block';
+    actionsCard.style.display = 'block';
+    
+    // Map-Größe für Leaflet korrigieren und Runde starten
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 50);
+    }
+    
+    startNewRound();
 }
 
 // Start a New Game Round
 async function startNewRound() {
     showLoader(true);
     
-    // Switch panels back to Guess mode
     guessCard.style.display = 'block';
     resultsCard.style.display = 'none';
     
-    // Clear map markers and lines
-    if (guessMarker) {
-        map.removeLayer(guessMarker);
-        guessMarker = null;
-    }
-    if (actualMarker) {
-        map.removeLayer(actualMarker);
-        actualMarker = null;
-    }
-    if (connectionLine) {
-        map.removeLayer(connectionLine);
-        connectionLine = null;
-    }
+    if (guessMarker) { map.removeLayer(guessMarker); guessMarker = null; }
+    if (actualMarker) { map.removeLayer(actualMarker); actualMarker = null; }
+    if (connectionLine) { map.removeLayer(connectionLine); connectionLine = null; }
 
     try {
         const response = await fetch('/api/game/new-round');
-        if (!response.ok) {
-            throw new Error('Failed to fetch new round.');
-        }
+        if (!response.ok) throw new Error('Failed to fetch new round.');
         
         const data = await response.json();
         currentRoundId = data.roundId;
-
-        // Display the license plate prefix
         plateTextDisplay.textContent = data.licensePlate;
 
-        // Reset view back to full Germany map
-        map.flyTo(CENTER_OF_GERMANY, 6, {
-            duration: 1.2
-        });
+        map.flyTo(CENTER_OF_GERMANY, 6, { duration: 1.2 });
 
-        // Setup control state
         submitGuessBtn.disabled = true;
         guessHint.textContent = "Click on the map of Germany to place your guess pin.";
         roundActive = true;
-
         newRoundBtn.textContent = 'Reset Round';
         
     } catch (error) {
@@ -192,9 +208,7 @@ async function submitGuess() {
     try {
         const response = await fetch('/api/game/guess', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 roundId: currentRoundId,
                 latitude: latlng.lat,
@@ -202,18 +216,14 @@ async function submitGuess() {
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to submit guess coordinates.');
-        }
+        if (!response.ok) throw new Error('Failed to submit guess.');
 
         const data = await response.json();
         
-        // Add actual location marker
         actualMarker = L.marker([data.actualLatitude, data.actualLongitude]).addTo(map);
         actualMarker.bindPopup(`<b>${data.cityName}</b> (${data.licensePlate})`).openPopup();
         guessMarker.bindPopup("Your Guess").openPopup();
 
-        // Connect guess marker to actual city center with a dashed polyline
         connectionLine = L.polyline([guessMarker.getLatLng(), actualMarker.getLatLng()], {
             color: '#06b6d4',
             weight: 3,
@@ -221,7 +231,6 @@ async function submitGuess() {
             opacity: 0.8
         }).addTo(map);
 
-        // Adjust map boundaries to display both pins comfortably
         map.fitBounds(connectionLine.getBounds(), {
             padding: [80, 80],
             maxZoom: 12,
@@ -229,11 +238,9 @@ async function submitGuess() {
             duration: 1.5
         });
 
-        // Switch panels to Results mode
         guessCard.style.display = 'none';
         resultsCard.style.display = 'block';
 
-        // Update Results elements
         if (data.correct) {
             resStatusTitle.textContent = "Correct!";
             resStatusTitle.style.color = "var(--success-color)";
@@ -248,11 +255,9 @@ async function submitGuess() {
         resDistance.textContent = `${data.distanceKm.toFixed(1)} km`;
         resPoints.textContent = `+${data.score} pts`;
 
-        // Update score
         score += data.score;
         updateStats();
 
-        // Submit score to database Leaderboard
         await submitScoreToLeaderboard();
 
     } catch (error) {
@@ -265,18 +270,12 @@ async function submitGuess() {
     }
 }
 
-// Submit score to backend leaderboard
 async function submitScoreToLeaderboard() {
     try {
         await fetch('/api/leaderboard', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                playerName: playerName,
-                score: score
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName, score: score })
         });
         fetchLeaderboard();
     } catch (error) {
@@ -284,14 +283,12 @@ async function submitScoreToLeaderboard() {
     }
 }
 
-// Fetch and render Leaderboard
 async function fetchLeaderboard() {
     try {
         const response = await fetch('/api/leaderboard');
         if (!response.ok) throw new Error('Failed to fetch leaderboard');
         
         const data = await response.json();
-        
         leaderboardDisplay.innerHTML = '';
         
         if (data.length === 0) {
@@ -323,13 +320,11 @@ async function fetchLeaderboard() {
     }
 }
 
-// Update UI stats indicators (Header Bar)
 function updateStats() {
     streakVal.textContent = streak;
     scoreVal.textContent = score;
 }
 
-// Show/Hide loader overlay
 function showLoader(show) {
     if (show) {
         loadingOverlay.classList.add('active');
@@ -342,9 +337,11 @@ function showLoader(show) {
 newRoundBtn.addEventListener('click', startNewRound);
 nextGuessBtn.addEventListener('click', startNewRound);
 submitGuessBtn.addEventListener('click', submitGuess);
-saveNameBtn.addEventListener('click', savePlayerName);
-playerNameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') savePlayerName();
+
+// Landing page hooks
+landingStartBtn.addEventListener('click', handleGameStart);
+landingNameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleGameStart();
 });
 
 // Initialize on DOM load
