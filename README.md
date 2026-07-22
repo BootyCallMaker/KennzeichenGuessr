@@ -12,8 +12,8 @@ An interactive, web-based geography guessing game. The backend is built with Spr
 
 ## Prerequisites
 - [Docker](https://www.docker.com/) (to run the PostgreSQL database container)
-- [Java Development Kit (JDK) 17](https://adoptium.net/) or higher (only needed for Option B, running locally without Docker)
-- An IDE (IntelliJ IDEA, Eclipse, or VS Code with Java Extension Pack) or Maven (only needed for Option B)
+- [Java Development Kit (JDK) 17](https://adoptium.net/) or higher
+- An IDE (IntelliJ IDEA, Eclipse, or VS Code with Java Extension Pack) or Maven
 
 ## How to Run
 
@@ -21,15 +21,27 @@ You can choose to run the application either completely inside **Docker Desktop*
 
 ### Option A: Running in Docker Desktop (Recommended)
 
-This method packages the backend and database into containers, letting you manage and launch the app directly from Docker Desktop. The Dockerfile builds the jar itself (multi-stage build), so no local Maven/JDK setup is required.
+This method packages the backend and database into containers, letting you manage and launch the app directly from Docker Desktop.
 
-1. **Start the Docker Stack**:
-   Build and start the container services (database + backend app) from the root directory:
+1. **Compile the Backend**:
+   Generate the package on your host machine using the Maven wrapper:
+   * **Windows (PowerShell)**:
+     ```powershell
+     $env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"  # Set if JAVA_HOME is not in environment
+     .\mvnw.cmd package -DskipTests
+     ```
+   * **macOS / Linux**:
+     ```bash
+     ./mvnw package -DskipTests
+     ```
+
+2. **Start the Docker Stack**:
+   Build and start the container services (database + backend app):
    ```bash
    docker compose up -d --build
    ```
 
-2. **Open the Game**:
+3. **Open the Game**:
    * Open the **Docker Desktop** application.
    * Under the **Containers** tab, expand the `kennzeichenguessr` group.
    * Click the blue **`8080:8080`** port link next to `license_plate_game_container` (or manually navigate to `http://localhost:8080/index.html` in your browser).

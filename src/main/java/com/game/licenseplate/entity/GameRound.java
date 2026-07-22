@@ -14,10 +14,6 @@ public class GameRound {
     @JoinColumn(name = "city_id", nullable = false)
     private CityData city;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "session_id", nullable = false)
-    private GameSession session;
-
     @Column(nullable = false)
     private double latitude;
 
@@ -27,22 +23,14 @@ public class GameRound {
     @Column(nullable = false)
     private boolean active;
 
-    @Column(name = "score")
-    private Integer score;
-
-    // Guards against re-resolving the same round twice under concurrent requests.
-    @Version
-    private Long version;
-
     // Constructors
     public GameRound() {}
 
-    public GameRound(CityData city, double latitude, double longitude, GameSession session) {
+    public GameRound(CityData city, double latitude, double longitude) {
         this.id = UUID.randomUUID();
         this.city = city;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.session = session;
         this.active = true;
     }
 
@@ -61,14 +49,6 @@ public class GameRound {
 
     public void setCity(CityData city) {
         this.city = city;
-    }
-
-    public GameSession getSession() {
-        return session;
-    }
-
-    public void setSession(GameSession session) {
-        this.session = session;
     }
 
     public double getLatitude() {
@@ -93,13 +73,5 @@ public class GameRound {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public Integer getScore() {
-        return score;
-    }
-
-    public void setScore(Integer score) {
-        this.score = score;
     }
 }

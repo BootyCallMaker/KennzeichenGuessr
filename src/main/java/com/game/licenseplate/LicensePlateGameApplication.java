@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.game.licenseplate.entity.CityData;
 import com.game.licenseplate.repository.CityDataRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,8 +15,6 @@ import java.util.List;
 
 @SpringBootApplication
 public class LicensePlateGameApplication {
-
-    private static final Logger log = LoggerFactory.getLogger(LicensePlateGameApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(LicensePlateGameApplication.class, args);
@@ -33,9 +29,10 @@ public class LicensePlateGameApplication {
                     InputStream inputStream = new ClassPathResource("cities.json").getInputStream();
                     List<CityData> cities = mapper.readValue(inputStream, new TypeReference<List<CityData>>() {});
                     cityRepository.saveAll(cities);
-                    log.info("Database successfully seeded with {} German cities from cities.json.", cities.size());
+                    System.out.println("Database successfully seeded with " + cities.size() + " German cities from cities.json.");
                 } catch (Exception e) {
-                    log.error("Failed to seed database from cities.json", e);
+                    System.err.println("Failed to seed database from cities.json: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         };

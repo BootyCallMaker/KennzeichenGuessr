@@ -7,6 +7,5 @@ public record GuessResponse(
     String cityName,
     String licensePlate,
     double actualLatitude,
-    double actualLongitude,
-    int sessionScore
+    double actualLongitude
 ) {}
