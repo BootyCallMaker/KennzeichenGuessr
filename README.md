@@ -23,25 +23,14 @@ You can choose to run the application either completely inside **Docker Desktop*
 
 This method packages the backend and database into containers, letting you manage and launch the app directly from Docker Desktop.
 
-1. **Compile the Backend**:
-   Generate the package on your host machine using the Maven wrapper:
-   * **Windows (PowerShell)**:
-     ```powershell
-     $env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"  # Set if JAVA_HOME is not in environment
-     .\mvnw.cmd package -DskipTests
-     ```
-   * **macOS / Linux**:
-     ```bash
-     ./mvnw package -DskipTests
-     ```
-
-2. **Start the Docker Stack**:
+1. **Start the Docker Stack**:
    Build and start the container services (database + backend app):
    ```bash
    docker compose up -d --build
    ```
+   *Note: Because our Dockerfile is now a self-contained multi-stage build, Docker will automatically download dependencies, compile the project, and package the JAR file inside the container. You do not need to install Java or run compile commands on your host.*
 
-3. **Open the Game**:
+2. **Open the Game**:
    * Open the **Docker Desktop** application.
    * Under the **Containers** tab, expand the `kennzeichenguessr` group.
    * Click the blue **`8080:8080`** port link next to `license_plate_game_container` (or manually navigate to `http://localhost:8080/index.html` in your browser).

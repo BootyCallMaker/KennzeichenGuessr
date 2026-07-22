@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/game")
 @CrossOrigin(origins = "*")
@@ -21,12 +23,13 @@ public class GameController {
     }
 
     @GetMapping("/new-round")
-    public ResponseEntity<GameRoundResponse> newRound() {
-        GameRound round = gameService.startNewRound();
+    public ResponseEntity<GameRoundResponse> newRound(@RequestParam(required = false) UUID sessionId) {
+        GameRound round = gameService.startNewRound(sessionId);
         // Hide coordinates from user to prevent cheating
         return ResponseEntity.ok(new GameRoundResponse(
                 round.getId(),
-                round.getCity().getLicensePlate()
+                round.getCity().getLicensePlate(),
+                round.getSession().getId()
         ));
     }
 
@@ -44,17 +47,8 @@ public class GameController {
                 result.getCityName(),
                 result.getCorrectPlate(),
                 result.getActualLatitude(),
-                result.getActualLongitude()
+                result.getActualLongitude(),
+                result.getSessionScore()
         ));
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleIllegalState(IllegalStateException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }

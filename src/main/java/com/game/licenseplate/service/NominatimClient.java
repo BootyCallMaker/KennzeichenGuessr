@@ -1,5 +1,9 @@
 package com.game.licenseplate.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -8,21 +12,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class NominatimClient {
 
+    private static final Logger log = LoggerFactory.getLogger(NominatimClient.class);
     private final RestTemplate restTemplate;
+    private final String baseUrl;
 
-    public NominatimClient() {
-        this.restTemplate = new RestTemplate();
+    public NominatimClient(RestTemplateBuilder restTemplateBuilder,
+                           @Value("${nominatim.base-url:https://nominatim.openstreetmap.org/search}") String baseUrl) {
+        this.restTemplate = restTemplateBuilder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(5))
+                .build();
+        this.baseUrl = baseUrl;
     }
 
     @SuppressWarnings("unchecked")
     public Coordinate getCoordinates(String cityName) {
-        String url = UriComponentsBuilder.fromHttpUrl("https://nominatim.openstreetmap.org/search")
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .queryParam("q", cityName + ", Germany")
                 .queryParam("format", "json")
                 .queryParam("limit", 1)
@@ -43,7 +55,7 @@ public class NominatimClient {
                 return new Coordinate(lat, lon);
             }
         } catch (Exception e) {
-            System.err.println("Error calling Nominatim API: " + e.getMessage());
+            log.warn("Error calling Nominatim API: {}", e.getMessage(), e);
         }
         // Fallback coordinates (approximate center of Germany) to keep game functional if rate limited
         return new Coordinate(51.1657, 10.4515);

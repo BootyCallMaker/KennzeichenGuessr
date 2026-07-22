@@ -23,15 +23,26 @@ public class GameRound {
     @Column(nullable = false)
     private boolean active;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "session_id", nullable = false)
+    private GameSession session;
+
+    @Column(name = "score")
+    private Integer score;
+
+    @Version
+    private Long version;
+
     // Constructors
     public GameRound() {}
 
-    public GameRound(CityData city, double latitude, double longitude) {
+    public GameRound(CityData city, double latitude, double longitude, GameSession session) {
         this.id = UUID.randomUUID();
         this.city = city;
         this.latitude = latitude;
         this.longitude = longitude;
         this.active = true;
+        this.session = session;
     }
 
     // Getters and Setters
@@ -73,5 +84,29 @@ public class GameRound {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public GameSession getSession() {
+        return session;
+    }
+
+    public void setSession(GameSession session) {
+        this.session = session;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

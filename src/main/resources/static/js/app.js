@@ -2,10 +2,12 @@
 
 // Game State
 let map;
+let maskLayer = null;
 let guessMarker = null;
 let actualMarker = null;
 let connectionLine = null;
 let currentRoundId = null;
+let currentSessionId = null;
 let score = 0;
 let streak = 0;
 let roundActive = false;
@@ -32,7 +34,6 @@ const landingNameInput = document.getElementById('landing-name-input');
 const infoCard = document.getElementById('info-card');
 const plateCard = document.getElementById('plate-card');
 const guessCard = document.getElementById('guess-card');
-const FrenchCard = document.getElementById('results-card'); // resultsCard
 const resultsCard = document.getElementById('results-card');
 const leaderboardDisplay = document.getElementById('leaderboard-display');
 const actionsCard = document.getElementById('actions-card');
@@ -51,111 +52,120 @@ function initMap() {
         zoomControl: true,
         maxZoom: 18,
         minZoom: 5,
-        maxBounds: [[47.2, 5.8], [55.1, 15.1]], // Verhindert, dass der Spieler zu weit von Deutschland wegscrollt
+        maxBounds: [[47.2, 5.8], [55.1, 15.1]],
         maxBoundsViscosity: 0.8
     }).setView(CENTER_OF_GERMANY, 6);
 
-    // 1. Die vibrante, farbige Hauptkarte mit deutschen Namen laden
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // 2. Trick: Wir holen uns die offiziellen Koordinaten der Grenze von Deutschland (Invertiert)
-    // Ein riesiges Viereck um die ganze Welt, aus dem Deutschland "ausgeschnitten" ist
+    // Fetch official high-resolution Germany GeoJSON for exact geographical border matching
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries/DEU.geo.json')
-        .then(response => response.json())
-        .then(geojsonData => {
-            // Wir erstellen ein invertiertes Polygon (Welt minus Deutschland)
-            const worldCoords = [
-                [-90, -180],
-                [-90, 180],
+        .then(res => res.json())
+        .then(geoJsonData => {
+            const worldOuter = [
+                [90, -180],
                 [90, 180],
-                [90, -180]
+                [-90, 180],
+                [-90, -180]
             ];
-            
-            // Die inneren Ringe sind die echten Grenzen Deutschlands
-            const deCoordinates = geojsonData.features[0].geometry.coordinates;
-            
-            // Falls es ein MultiPolygon ist (Inseln etc.), mappen wir alle Ringe rein
-            const holes = geojsonData.features[0].geometry.type === 'MultiPolygon' 
-                ? deCoordinates.map(polygon => polygon[0].map(coord => [coord[1], coord[0]]))
-                : deCoordinates.map(ring => ring.map(coord => [coord[1], coord[0]]));
 
-            // Zeichne die abdunkelnde Maske über den Rest der Welt
-            L.polygon([worldCoords, ...holes], {
-                className: 'map-mask-overlay', // <--- Diese Klasse neu hinzufügen!
-                color: 'transparent',          
-                fillColor: '#080c14',          
-                fillOpacity: 0.35,             
-                pointerEvents: 'none'          
+            let germanyRings = [];
+            geoJsonData.features.forEach(feature => {
+                const geom = feature.geometry;
+                if (geom.type === 'Polygon') {
+                    geom.coordinates.forEach(ring => {
+                        germanyRings.push(ring.map(coord => [coord[1], coord[0]]));
+                    });
+                } else if (geom.type === 'MultiPolygon') {
+                    geom.coordinates.forEach(poly => {
+                        poly.forEach(ring => {
+                            germanyRings.push(ring.map(coord => [coord[1], coord[0]]));
+                        });
+                    });
+                }
+            });
+
+            maskLayer = L.polygon([worldOuter, ...germanyRings], {
+                color: '#06b6d4',
+                weight: 1.5,
+                fillColor: '#080c14',
+                fillOpacity: 0.5,
+                className: 'map-mask-overlay',
+                interactive: false
             }).addTo(map);
         })
-        .catch(err => {
-            console.warn("Deutschland-Maske konnte nicht geladen werden, zeige normale Karte:", err);
-        });
+        .catch(err => console.error('Failed to load Germany GeoJSON boundary:', err));
 
-    // Klick-Logik auf der Karte bleibt unverändert...
-    map.on('click', (e) => {
-        if (!roundActive) return;
-        const { lat, lng } = e.latlng;
-
-        if (guessMarker === null) {
-            guessMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            guessMarker.on('dragend', () => { submitGuessBtn.disabled = false; });
-        } else {
-            guessMarker.setLatLng([lat, lng]);
-        }
-        submitGuessBtn.disabled = false;
-        guessHint.textContent = `Pin platziert bei: [${lat.toFixed(4)}, ${lng.toFixed(4)}]`;
-    });
+    map.on('click', onMapClick);
 }
-// Check player state on load (Transitions between Landing Screen and Game)
-// Check player state on load - Startet JETZT IMMER auf der Landing Page
+
+// Handle Map Clicks to Drop Guess Pin
+function onMapClick(e) {
+    if (!roundActive) return;
+
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    if (guessMarker) {
+        guessMarker.setLatLng(e.latlng);
+    } else {
+        guessMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        guessMarker.on('dragend', () => {
+            if (roundActive) submitGuessBtn.disabled = false;
+        });
+    }
+
+    submitGuessBtn.disabled = false;
+    guessHint.textContent = "Pin placed! Click 'Submit Guess' to evaluate.";
+}
+
+// Always show landing screen on page load (no name caching)
 function checkPlayerState() {
-    // Landing Page erzwingen
+    playerName = null;
+    currentSessionId = null;
+    score = 0;
+    streak = 0;
+    landingNameInput.value = '';
+    
     landingPage.style.display = 'flex';
     gameContent.style.display = 'none';
 
-    // Wenn schon ein Name gespeichert war, tragen wir ihn als Komfort-Feature direkt ins Input-Feld ein
-    const savedName = localStorage.getItem('guessr_player_name');
-    if (savedName && savedName.trim().length >= 2) {
-        landingNameInput.value = savedName.trim();
-    }
-    
-    // Leaderboard trotzdem schon im Hintergrund laden
     fetchLeaderboard();
 }
 
-// Handler for the Landing Page Start Button
-// Handler for the Landing Page Start Button
+// Landing Page: Set Player Name and Enter Game
 function handleGameStart() {
     const inputName = landingNameInput.value.trim();
-    if (inputName.length < 2 || inputName.length > 12) {
-        alert("Please enter a name between 2 and 12 characters long.");
+    if (!inputName) {
+        alert('Please enter your name to start playing!');
         return;
     }
     
-    // Name speichern und zuweisen
-    localStorage.setItem('guessr_player_name', inputName);
+    if (inputName.length < 2 || inputName.length > 20) {
+        alert('Player name must be between 2 and 20 characters.');
+        return;
+    }
+
     playerName = inputName;
     playerDisplay.textContent = playerName;
     
-    // Screens umschalten
+    currentSessionId = null;
+    score = 0;
+    streak = 0;
+    updateStats();
+
     landingPage.style.display = 'none';
     gameContent.style.display = 'flex';
     
-    // Spiel-Panels aktivieren
     infoCard.style.display = 'block';
     plateCard.style.display = 'flex';
     guessCard.style.display = 'block';
     actionsCard.style.display = 'block';
     
-    // Map-Größe für Leaflet korrigieren und Runde starten
     if (map) {
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 50);
+        setTimeout(() => map.invalidateSize(), 50);
     }
     
     startNewRound();
@@ -173,11 +183,15 @@ async function startNewRound() {
     if (connectionLine) { map.removeLayer(connectionLine); connectionLine = null; }
 
     try {
-        const response = await fetch('/api/game/new-round');
-        if (!response.ok) throw new Error('Failed to fetch new round.');
+        const url = currentSessionId ? `/api/game/new-round?sessionId=${currentSessionId}` : '/api/game/new-round';
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to fetch new round.');
+        }
         
         const data = await response.json();
         currentRoundId = data.roundId;
+        currentSessionId = data.sessionId;
         plateTextDisplay.textContent = data.licensePlate;
 
         map.flyTo(CENTER_OF_GERMANY, 6, { duration: 1.2 });
@@ -255,7 +269,7 @@ async function submitGuess() {
         resDistance.textContent = `${data.distanceKm.toFixed(1)} km`;
         resPoints.textContent = `+${data.score} pts`;
 
-        score += data.score;
+        score = data.sessionScore;
         updateStats();
 
         await submitScoreToLeaderboard();
@@ -274,8 +288,13 @@ async function submitScoreToLeaderboard() {
     try {
         await fetch('/api/leaderboard', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName, score: score })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                playerName: playerName,
+                sessionId: currentSessionId
+            })
         });
         fetchLeaderboard();
     } catch (error) {

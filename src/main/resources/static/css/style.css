@@ -826,6 +826,6 @@ main {
 
 /* Weiche Kanten für die Deutschland-Maske (Vignetten-Effekt) */
 .map-mask-overlay {
-    filter: blur(8px); /* Erzeugt die weiche Kante. Erhöhe den Wert (z.B. 12px) für noch weichere Kanten */
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.7)) blur(2.5px);
     transform-origin: center;
 }
