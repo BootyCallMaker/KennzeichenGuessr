@@ -46,8 +46,10 @@ const resPoints = document.getElementById('res-points');
 
 const CENTER_OF_GERMANY = [51.1657, 10.4515];
 
-// Initialize Map
+// Initialize Map (called once container is visible to prevent 0x0 size NaN errors)
 function initMap() {
+    if (map) return;
+
     map = L.map('map', {
         zoomControl: true,
         maxZoom: 18,
@@ -163,8 +165,10 @@ function handleGameStart() {
     guessCard.style.display = 'block';
     actionsCard.style.display = 'block';
     
+    // Ensure map container has non-zero size before initializing or animating
+    initMap();
     if (map) {
-        setTimeout(() => map.invalidateSize(), 50);
+        map.invalidateSize();
     }
     
     startNewRound();
@@ -197,7 +201,10 @@ async function startNewRound() {
         currentSessionId = data.sessionId;
         plateTextDisplay.textContent = data.licensePlate;
 
-        map.flyTo(CENTER_OF_GERMANY, 6, { duration: 1.2 });
+        if (map) {
+            map.invalidateSize();
+            map.flyTo(CENTER_OF_GERMANY, 6, { duration: 1.2 });
+        }
 
         submitGuessBtn.disabled = true;
         guessHint.textContent = "Click on the map of Germany to place your guess pin.";
@@ -371,6 +378,5 @@ landingNameInput.addEventListener('keypress', (e) => {
 
 // Initialize on DOM load
 window.addEventListener('DOMContentLoaded', () => {
-    initMap();
     checkPlayerState();
 });
