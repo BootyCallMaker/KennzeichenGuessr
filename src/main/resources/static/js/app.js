@@ -60,8 +60,8 @@ function initMap() {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Fetch official high-resolution Germany GeoJSON for exact geographical border matching
-    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries/DEU.geo.json')
+    // Fetch ultra-high resolution Germany state boundaries (1_sehr_hoch.geo.json) for 100% exact border precision
+    fetch('https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/1_sehr_hoch.geo.json')
         .then(res => res.json())
         .then(geoJsonData => {
             const worldOuter = [
@@ -88,15 +88,14 @@ function initMap() {
             });
 
             maskLayer = L.polygon([worldOuter, ...germanyRings], {
-                color: '#06b6d4',
-                weight: 1.5,
+                stroke: false,
                 fillColor: '#080c14',
-                fillOpacity: 0.5,
+                fillOpacity: 0.35,
                 className: 'map-mask-overlay',
                 interactive: false
             }).addTo(map);
         })
-        .catch(err => console.error('Failed to load Germany GeoJSON boundary:', err));
+        .catch(err => console.error('Failed to load ultra-high resolution Germany GeoJSON:', err));
 
     map.on('click', onMapClick);
 }
