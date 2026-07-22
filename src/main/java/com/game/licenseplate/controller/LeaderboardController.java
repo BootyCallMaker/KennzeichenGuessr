@@ -2,6 +2,7 @@ package com.game.licenseplate.controller;
 
 import com.game.licenseplate.dto.LeaderboardRequest;
 import com.game.licenseplate.entity.LeaderboardEntry;
+import com.game.licenseplate.service.GameService;
 import com.game.licenseplate.service.LeaderboardService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +16,20 @@ import java.util.List;
 public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
+    private final GameService gameService;
 
-    public LeaderboardController(LeaderboardService leaderboardService) {
+    public LeaderboardController(LeaderboardService leaderboardService, GameService gameService) {
         this.leaderboardService = leaderboardService;
+        this.gameService = gameService;
     }
 
     @PostMapping
     public ResponseEntity<LeaderboardEntry> submitScore(@Valid @RequestBody LeaderboardRequest request) {
-        LeaderboardEntry entry = leaderboardService.submitScore(request.playerName(), request.score());
+        // The score is never taken from the client directly - it's read from the
+        // server-tracked session total, so a submission can't exceed what was
+        // actually earned in-game (see GameService#getSessionScore).
+        int score = gameService.getSessionScore(request.sessionId());
+        LeaderboardEntry entry = leaderboardService.submitScore(request.playerName(), score);
         return ResponseEntity.ok(entry);
     }
 

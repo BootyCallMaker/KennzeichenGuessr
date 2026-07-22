@@ -1,5 +1,8 @@
 package com.game.licenseplate.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -8,16 +11,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class NominatimClient {
 
+    private static final Logger log = LoggerFactory.getLogger(NominatimClient.class);
+
     private final RestTemplate restTemplate;
 
-    public NominatimClient() {
-        this.restTemplate = new RestTemplate();
+    // Spring Boot auto-configures a RestTemplateBuilder bean; using it (instead of
+    // `new RestTemplate()`) lets us set explicit timeouts so a slow/unresponsive
+    // Nominatim doesn't hang a request thread indefinitely.
+    public NominatimClient(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(5))
+                .build();
     }
 
     @SuppressWarnings("unchecked")
@@ -43,7 +55,8 @@ public class NominatimClient {
                 return new Coordinate(lat, lon);
             }
         } catch (Exception e) {
-            System.err.println("Error calling Nominatim API: " + e.getMessage());
+            log.warn("Error calling Nominatim API for city '{}', falling back to default coordinates: {}",
+                    cityName, e.getMessage());
         }
         // Fallback coordinates (approximate center of Germany) to keep game functional if rate limited
         return new Coordinate(51.1657, 10.4515);

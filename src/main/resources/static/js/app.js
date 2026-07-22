@@ -6,6 +6,7 @@ let guessMarker = null;
 let actualMarker = null;
 let connectionLine = null;
 let currentRoundId = null;
+let currentSessionId = null;
 let score = 0;
 let streak = 0;
 let roundActive = false;
@@ -173,11 +174,15 @@ async function startNewRound() {
     if (connectionLine) { map.removeLayer(connectionLine); connectionLine = null; }
 
     try {
-        const response = await fetch('/api/game/new-round');
+        const url = currentSessionId
+            ? `/api/game/new-round?sessionId=${currentSessionId}`
+            : '/api/game/new-round';
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch new round.');
-        
+
         const data = await response.json();
         currentRoundId = data.roundId;
+        currentSessionId = data.sessionId;
         plateTextDisplay.textContent = data.licensePlate;
 
         map.flyTo(CENTER_OF_GERMANY, 6, { duration: 1.2 });
@@ -255,7 +260,9 @@ async function submitGuess() {
         resDistance.textContent = `${data.distanceKm.toFixed(1)} km`;
         resPoints.textContent = `+${data.score} pts`;
 
-        score += data.score;
+        // Use the server-tracked running total rather than accumulating locally,
+        // since the server is the source of truth for what gets submitted to the leaderboard.
+        score = data.sessionScore;
         updateStats();
 
         await submitScoreToLeaderboard();
@@ -272,10 +279,12 @@ async function submitGuess() {
 
 async function submitScoreToLeaderboard() {
     try {
+        // The server looks the score up itself from sessionId (see LeaderboardController) -
+        // the client can no longer just make up a number here.
         await fetch('/api/leaderboard', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName, score: score })
+            body: JSON.stringify({ playerName: playerName, sessionId: currentSessionId })
         });
         fetchLeaderboard();
     } catch (error) {

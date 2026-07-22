@@ -1,5 +1,7 @@
 package com.game.licenseplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.game.licenseplate.entity.CityData;
 import com.game.licenseplate.repository.CityDataRepository;
 import com.game.licenseplate.service.NominatimClient;
@@ -32,6 +34,8 @@ public class GameControllerTest {
     @MockBean
     private NominatimClient nominatimClient;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @BeforeEach
     public void setup() {
         // Clear previous state and seed a test city
@@ -45,10 +49,11 @@ public class GameControllerTest {
 
     @Test
     public void testGameRoundLifecycle() throws Exception {
-        // 1. Create a new game round - should return roundId and licensePlate (B) and NO coordinates
+        // 1. Create a new game round - should return roundId, sessionId and licensePlate (B) and NO coordinates
         String responseContent = mockMvc.perform(get("/api/game/new-round"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roundId", notNullValue()))
+                .andExpect(jsonPath("$.sessionId", notNullValue()))
                 .andExpect(jsonPath("$.licensePlate", is("B")))
                 .andExpect(jsonPath("$.latitude").doesNotExist())
                 .andExpect(jsonPath("$.longitude").doesNotExist())
@@ -56,8 +61,9 @@ public class GameControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        // Extract round ID
-        String roundId = responseContent.split("\"roundId\":\"")[1].split("\"")[0];
+        JsonNode firstRound = objectMapper.readTree(responseContent);
+        String roundId = firstRound.get("roundId").asText();
+        String sessionId = firstRound.get("sessionId").asText();
 
         // 2. Submit a correct pin guess (Berlin coordinates: 52.5200, 13.4049)
         String guessJson = String.format("{\"roundId\":\"%s\",\"latitude\":52.5200,\"longitude\":13.4049}", roundId);
@@ -67,6 +73,7 @@ public class GameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.correct", is(true)))
                 .andExpect(jsonPath("$.score", is(1000)))
+                .andExpect(jsonPath("$.sessionScore", is(1000)))
                 .andExpect(jsonPath("$.cityName", is("Berlin")))
                 .andExpect(jsonPath("$.licensePlate", is("B")))
                 .andExpect(jsonPath("$.actualLatitude", closeTo(52.5200, 0.01)))
@@ -77,5 +84,21 @@ public class GameControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(guessJson))
                 .andExpect(status().isBadRequest());
+
+        // 4. Playing a second round in the same session should add to the running total
+        String secondRoundResponse = mockMvc.perform(get("/api/game/new-round").param("sessionId", sessionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId", is(sessionId)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String secondRoundId = objectMapper.readTree(secondRoundResponse).get("roundId").asText();
+
+        String secondGuessJson = String.format("{\"roundId\":\"%s\",\"latitude\":52.5200,\"longitude\":13.4049}", secondRoundId);
+        mockMvc.perform(post("/api/game/guess")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(secondGuessJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionScore", is(2000)));
     }
 }
