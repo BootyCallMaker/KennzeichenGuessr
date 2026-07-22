@@ -182,10 +182,14 @@ async function startNewRound() {
     if (connectionLine) { map.removeLayer(connectionLine); connectionLine = null; }
 
     try {
-        const url = currentSessionId ? `/api/game/new-round?sessionId=${currentSessionId}` : '/api/game/new-round';
+        const url = (currentSessionId && currentSessionId !== 'null' && currentSessionId !== 'undefined')
+            ? `/api/game/new-round?sessionId=${currentSessionId}`
+            : '/api/game/new-round';
+
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error('Failed to fetch new round.');
+            const errText = await response.text();
+            throw new Error(`Server returned HTTP ${response.status}: ${errText}`);
         }
         
         const data = await response.json();
@@ -202,7 +206,7 @@ async function startNewRound() {
         
     } catch (error) {
         console.error('Error starting round:', error);
-        alert('Could not start game round. Please check if your Spring Boot backend is running.');
+        alert('Could not start game round: ' + error.message);
     } finally {
         showLoader(false);
     }
@@ -229,7 +233,10 @@ async function submitGuess() {
             })
         });
 
-        if (!response.ok) throw new Error('Failed to submit guess.');
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Server returned HTTP ${response.status}: ${errText}`);
+        }
 
         const data = await response.json();
         
@@ -275,7 +282,7 @@ async function submitGuess() {
 
     } catch (error) {
         console.error('Error submitting guess:', error);
-        alert('Error processing guess coordinates. Please try again.');
+        alert('Error processing guess coordinates: ' + error.message);
         roundActive = true;
         submitGuessBtn.disabled = false;
     } finally {
