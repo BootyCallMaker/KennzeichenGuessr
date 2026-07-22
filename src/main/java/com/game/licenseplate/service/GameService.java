@@ -6,6 +6,8 @@ import com.game.licenseplate.entity.GameSession;
 import com.game.licenseplate.repository.CityDataRepository;
 import com.game.licenseplate.repository.GameRoundRepository;
 import com.game.licenseplate.repository.GameSessionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,6 +20,8 @@ import java.util.UUID;
 
 @Service
 public class GameService {
+
+    private static final Logger log = LoggerFactory.getLogger(GameService.class);
 
     private final CityDataRepository cityRepository;
     private final GameRoundRepository roundRepository;
@@ -42,7 +46,7 @@ public class GameService {
         }
         if (session == null) {
             session = new GameSession(UUID.randomUUID());
-            session = sessionRepository.save(session);
+            session = sessionRepository.saveAndFlush(session);
         }
 
         long count = cityRepository.count();
@@ -66,19 +70,25 @@ public class GameService {
             actualLat = city.getLatitude();
             actualLon = city.getLongitude();
         } else {
-            NominatimClient.Coordinate coordinate = nominatimClient.getCoordinates(city.getName());
-            actualLat = coordinate.getLatitude();
-            actualLon = coordinate.getLongitude();
-            
-            // Cache coordinates in DB
-            city.setLatitude(actualLat);
-            city.setLongitude(actualLon);
-            cityRepository.save(city);
+            try {
+                NominatimClient.Coordinate coordinate = nominatimClient.getCoordinates(city.getName());
+                actualLat = coordinate.getLatitude();
+                actualLon = coordinate.getLongitude();
+                
+                // Cache coordinates in DB
+                city.setLatitude(actualLat);
+                city.setLongitude(actualLon);
+                cityRepository.save(city);
+            } catch (Exception e) {
+                log.warn("Failed to fetch coordinates for city '{}': {}", city.getName(), e.getMessage());
+                actualLat = 51.1657;
+                actualLon = 10.4515;
+            }
         }
 
         // Create and save new round tied to the session
         GameRound round = new GameRound(city, actualLat, actualLon, session);
-        return roundRepository.save(round);
+        return roundRepository.saveAndFlush(round);
     }
 
     @Transactional
