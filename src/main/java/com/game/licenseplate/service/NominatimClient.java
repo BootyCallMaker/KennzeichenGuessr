@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -34,28 +35,32 @@ public class NominatimClient {
 
     @SuppressWarnings("unchecked")
     public Coordinate getCoordinates(String cityName) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .queryParam("q", cityName + ", Germany")
                 .queryParam("format", "json")
                 .queryParam("limit", 1)
-                .toUriString();
+                .build()
+                .toUri();
 
         HttpHeaders headers = new HttpHeaders();
         // Nominatim requires a valid and descriptive User-Agent header
-        headers.set("User-Agent", "LicensePlateGame/1.0 (contact@example.com)");
+        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LicensePlateGame/1.0");
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, entity, List.class);
+            ResponseEntity<List> response = restTemplate.exchange(uri, HttpMethod.GET, entity, List.class);
             List<?> body = response.getBody();
             if (body != null && !body.isEmpty()) {
                 Map<String, Object> firstResult = (Map<String, Object>) body.get(0);
                 double lat = Double.parseDouble((String) firstResult.get("lat"));
                 double lon = Double.parseDouble((String) firstResult.get("lon"));
+                log.info("Successfully fetched live coordinates from Nominatim for '{}': ({}, {})", cityName, lat, lon);
                 return new Coordinate(lat, lon);
+            } else {
+                log.warn("Nominatim returned empty results for city '{}'", cityName);
             }
         } catch (Exception e) {
-            log.warn("Error calling Nominatim API: {}", e.getMessage(), e);
+            log.warn("Error calling Nominatim API for city '{}': {}", cityName, e.getMessage());
         }
         // Fallback coordinates (approximate center of Germany) to keep game functional if rate limited
         return new Coordinate(51.1657, 10.4515);

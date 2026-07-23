@@ -1,11 +1,8 @@
 package com.game.licenseplate.service;
 
-import com.game.licenseplate.entity.CityData;
-import com.game.licenseplate.entity.GameRound;
-import com.game.licenseplate.entity.GameSession;
-import com.game.licenseplate.repository.CityDataRepository;
-import com.game.licenseplate.repository.GameRoundRepository;
-import com.game.licenseplate.repository.GameSessionRepository;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -15,8 +12,12 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.game.licenseplate.entity.CityData;
+import com.game.licenseplate.entity.GameRound;
+import com.game.licenseplate.entity.GameSession;
+import com.game.licenseplate.repository.CityDataRepository;
+import com.game.licenseplate.repository.GameRoundRepository;
+import com.game.licenseplate.repository.GameSessionRepository;
 
 @Service
 public class GameService {
@@ -28,10 +29,10 @@ public class GameService {
     private final GameSessionRepository sessionRepository;
     private final NominatimClient nominatimClient;
 
-    public GameService(CityDataRepository cityRepository, 
-                       GameRoundRepository roundRepository, 
-                       GameSessionRepository sessionRepository,
-                       NominatimClient nominatimClient) {
+    public GameService(CityDataRepository cityRepository,
+            GameRoundRepository roundRepository,
+            GameSessionRepository sessionRepository,
+            NominatimClient nominatimClient) {
         this.cityRepository = cityRepository;
         this.roundRepository = roundRepository;
         this.sessionRepository = sessionRepository;
@@ -67,18 +68,24 @@ public class GameService {
 
         // Use cached coordinates if available, otherwise fetch dynamically
         if (city.getLatitude() != null && city.getLongitude() != null) {
+            log.info("Using cached coordinates for city '{}' ({}, {})", city.getName(), city.getLatitude(),
+                    city.getLongitude());
             actualLat = city.getLatitude();
             actualLon = city.getLongitude();
         } else {
             try {
+                log.info("🌐 [LIVE REST-API CALL] Fetching coordinates for city '{}' from Nominatim API...",
+                        city.getName());
                 NominatimClient.Coordinate coordinate = nominatimClient.getCoordinates(city.getName());
                 actualLat = coordinate.getLatitude();
                 actualLon = coordinate.getLongitude();
-                
+
                 // Cache coordinates in DB
                 city.setLatitude(actualLat);
                 city.setLongitude(actualLon);
                 cityRepository.save(city);
+                log.info("✅ [LIVE REST-API SUCCESS] Received & cached coordinates for '{}': ({}, {})", city.getName(),
+                        actualLat, actualLon);
             } catch (Exception e) {
                 log.warn("Failed to fetch coordinates for city '{}': {}", city.getName(), e.getMessage());
                 actualLat = 51.1657;
@@ -109,12 +116,19 @@ public class GameService {
         double distanceKm = calculateDistanceInKm(guessLat, guessLon, actualLat, actualLon);
 
         // Deem correct if the guess is within a 50 km radius of the city center
-        boolean correct = distanceKm <= 50.0;
+        boolean correct = distanceKm <= 20.0;
 
         // GeoGuessr-style scoring: max 1000 points, penalizing 2 points per km away
-        int score = Math.max(0, 1000 - (int) (distanceKm * 2));
+        int score;
 
-        // Persist round state and check for concurrent submissions via optimistic lock versioning
+        if (!correct) {
+            score = Math.max(0, 1000 - (int) (distanceKm * 2));
+        } else {
+            score = 1000;
+        }
+
+        // Persist round state and check for concurrent submissions via optimistic lock
+        // versioning
         round.setActive(false);
         round.setScore(score);
         try {
@@ -141,8 +155,7 @@ public class GameService {
                 city.getLicensePlate(),
                 city.getName(),
                 actualLat,
-                actualLon
-        );
+                actualLon);
     }
 
     @Transactional(readOnly = true)
@@ -153,19 +166,20 @@ public class GameService {
     }
 
     /**
-     * Calculates geographical distance between two points using the Haversine formula.
+     * Calculates geographical distance between two points using the Haversine
+     * formula.
      */
     private double calculateDistanceInKm(double lat1, double lon1, double lat2, double lon2) {
         final int EARTH_RADIUS = 6371; // Radius of the Earth in km
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
-        
+
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-                
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return EARTH_RADIUS * c;
     }
 
@@ -179,7 +193,8 @@ public class GameService {
         private final double actualLatitude;
         private final double actualLongitude;
 
-        public GuessResult(boolean correct, double distanceKm, int score, int sessionScore, String correctPlate, String cityName, double actualLatitude, double actualLongitude) {
+        public GuessResult(boolean correct, double distanceKm, int score, int sessionScore, String correctPlate,
+                String cityName, double actualLatitude, double actualLongitude) {
             this.correct = correct;
             this.distanceKm = distanceKm;
             this.score = score;
